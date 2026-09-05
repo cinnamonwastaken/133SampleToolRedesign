@@ -61,7 +61,13 @@ exports.default = async function afterPack(context) {
     `${context.packager.appInfo.productFilename}.app`
   );
 
-  console.log(`  • afterPack: ad-hoc signing ${appPath} (arch=${context.arch})`);
+  // context.arch is electron-builder's internal Arch enum, so it logs as a
+  // bare integer ("arch=3") unless we name it. Fallback keeps the log honest
+  // if the enum ever gains a member.
+  const ARCH_NAMES = { 0: "ia32", 1: "x64", 2: "armv7l", 3: "arm64", 4: "universal" };
+  const archName = ARCH_NAMES[context.arch] ?? `arch ${context.arch}`;
+
+  console.log(`  • afterPack: ad-hoc signing ${appPath} (${archName})`);
 
   // --deep signs the nested Electron helper apps and frameworks too. Apple
   // deprecates --deep for real distribution signing, where each nested binary
