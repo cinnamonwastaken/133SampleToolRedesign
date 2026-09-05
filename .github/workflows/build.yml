@@ -26,10 +26,27 @@ jobs:
       - name: Build Electron app (no publish)
         run: npm run package -- --publish=never
 
+      # The macOS .dmg can only be produced on a macOS runner: dmg creation
+      # needs hdiutil, and build/afterPack.js needs codesign to apply the
+      # ad-hoc signature that lets the arm64 build launch at all. A mac target
+      # packed on Linux/Windows would ship an app that cannot open.
+      - name: Verify macOS artifacts are signed
+        if: matrix.os == 'macos-latest'
+        run: |
+          set -euo pipefail
+          for app in dist/mac*/*.app; do
+            echo "Verifying $app"
+            codesign --verify --deep --strict "$app"
+          done
+          ls -la dist/*.dmg
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-build
+          # Fail rather than silently publishing an empty artifact if a target
+          # produced nothing.
+          if-no-files-found: error
           path: |
             dist/*.*
 

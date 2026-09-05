@@ -65,6 +65,40 @@ On the right side of this page is the `Releases` section. You can find this app 
 
 ---
 
+## Installing on macOS
+
+Download the `.dmg` that matches your Mac:
+
+| Your Mac | File |
+|----------|------|
+| Apple Silicon (M1/M2/M3/M4) | `EP-133 Sample Tool-<version>-arm64.dmg` |
+| Intel | `EP-133 Sample Tool-<version>-x64.dmg` |
+
+Open the `.dmg` and drag the app into your Applications folder.
+
+**On first launch, macOS will refuse to open it.** This is expected, and it
+is not a sign that anything is wrong with the download.
+
+This app is not signed with an Apple Developer ID — that requires a paid
+certificate from Apple, which this project does not have. The app is
+*ad-hoc* signed, which is enough for it to run (Apple Silicon will not launch
+an entirely unsigned app at all), but macOS still marks anything downloaded
+from the internet as quarantined.
+
+To open it the first time, pick either:
+
+- **Right-click the app in Applications → Open → Open.** You only need to do
+  this once; macOS remembers the choice.
+- Or clear the quarantine flag from Terminal:
+  ```sh
+  xattr -cr "/Applications/EP-133 Sample Tool.app"
+  ```
+
+If macOS says the app is "damaged and can't be opened", that is the same
+quarantine flag — the `xattr` command above fixes it.
+
+---
+
 ## How to build from source
 
 **NOTE:** To build the version for the EP-1320 Medieval, after cloning the repo, run the following command to switch to the EP-1320 branch:

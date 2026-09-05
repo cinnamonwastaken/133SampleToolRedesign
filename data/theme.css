@@ -1,0 +1,397 @@
+/* ============================================================================
+ * theme.css — teenage engineering catalog reskin
+ * ============================================================================
+ *
+ * WHY THIS FILE EXISTS, AND WHY IT IS *ONLY* A STYLESHEET
+ * ------------------------------------------------------
+ * `data/index.js` is not our code. It is a 2.8 MB scrape of TE's own compiled
+ * React app. The previous maintainer reskinned it by prettifying that bundle
+ * and hand-substituting ~50 colour literals with globals from `custom.js`.
+ * That work was silently destroyed the moment someone pulled a fresh scrape
+ * (commit 28e545a dropped all 119 patched lines; `custom.js` is dead code at
+ * HEAD as a result — custom colours, bank names and serial hiding all stopped
+ * working, even though the README still advertises them).
+ *
+ * We are not repeating that mistake. It turns out we don't have to: the bundle
+ * is already fully tokenised with ~200 semantic CSS custom properties
+ * (--ep-faceplate, --library-row-selected, --ui-progress-bar, ...), and TE
+ * themes its own SKUs purely by overriding them — `body.TE032AS005` is the
+ * EP-1320 "medieval" palette, `body.TE032AS006` is the EP-40. We theme the app
+ * the same way the app themes itself.
+ *
+ * Consequences:
+ *   - Zero edits to index.js or index.css. A future re-scrape of the upstream
+ *     bundle cannot wipe this file.
+ *   - The only change outside this file is one <link> in index.html (and in
+ *     .index.html.blank, which build.sh regenerates index.html from — miss
+ *     that one and the next build silently drops the theme).
+ *
+ * SPECIFICITY NOTE
+ * ----------------
+ * index.css sets the base palette on `:root` (0,0,0) and the per-SKU palettes
+ * on `body.TE032AS005` / `body.TE032AS006` (0,1,1). A plain `:root` block here
+ * would lose to those SKU blocks on the EP-1320/EP-40 builds. So the remap
+ * below is applied to `:root` *and* to both SKU selectors: equal specificity,
+ * but this file is loaded last, so it wins everywhere.
+ *
+ * THE DESIGN TARGET
+ * -----------------
+ * teenage.engineering's own catalog: pure white ground, zero shadows, zero
+ * gradients, huge whitespace, product sat on a flat warm-grey card, black
+ * text, and orange used once per screen rather than as a theme colour. Plus
+ * the hardware itself: cream body, dark keys, thin black dividers, and exactly
+ * one orange accent (RECORD button, GAIN knob).
+ * ========================================================================= */
+
+
+/* ---------------------------------------------------------------------------
+ * 1. THE PALETTE
+ * These are ours — the single source of truth. Everything below maps the app's
+ * tokens onto these, so a palette change means editing this block only.
+ * ------------------------------------------------------------------------ */
+:root {
+    --te-white:       #ffffff;  /* page ground — flat, never a gradient      */
+    --te-card:        #f2f2f0;  /* warm grey product card behind the device  */
+    --te-card-line:   #dcdad4;  /* hairline drawn on the card                */
+
+    --te-cream:       #eeece6;  /* hardware body: off-white/cream            */
+    --te-cream-2:     #e2dfd7;  /* secondary body panel + light buttons      */
+
+    --te-ink:         #231f20;  /* black: text, labels, dividers, edges      */
+    --te-ink-soft:    #6e6b66;  /* secondary labels, grilles, inactive text  */
+    --te-hairline:    #cfccc5;  /* thin rules — the only "border" we use     */
+    --te-line:        #c2bfb7;  /* line-drawing stroke for the device art    */
+
+    --te-key:         #2a2724;  /* dark keys and pads                        */
+    --te-key-edge:    #191715;  /* key bevel/edge                            */
+    --te-display:     #14100f;  /* display glass                             */
+    --te-display-txt: #f2f2f0;  /* text on the display                       */
+
+    --te-orange:      #e8541e;  /* THE accent. Used sparingly and on purpose. */
+}
+
+
+/* ---------------------------------------------------------------------------
+ * 2. PAGE GROUND
+ * Stock ships a tiled `bg.png` graph-paper texture. The catalog look is a flat
+ * white sheet, so the texture goes. `background-image: none` has to beat the
+ * media-query variants in index.css that swap in bg_x2.png at wider viewports,
+ * which is why it is repeated at the same breakpoints.
+ * ------------------------------------------------------------------------ */
+html, body {
+    background-image: none;
+    background-color: var(--te-white);
+}
+
+@media (width >= 700px) {
+    html, body { background-image: none; }
+}
+
+
+/* ---------------------------------------------------------------------------
+ * 3. TOKEN REMAP
+ * Every custom property the bundle actually reads, pointed at our palette.
+ * Grouped the way the device is grouped, because that is how you will read it
+ * when something looks wrong.
+ * ------------------------------------------------------------------------ */
+:root,
+body.TE032AS005,
+body.TE032AS006 {
+
+    /* -- core ------------------------------------------------------------ */
+    /* --accent is read 61x directly by the bundle's SVG and 37x by index.css.
+     * It is the single colour that carries the whole brand, so it is the one
+     * token we deliberately keep loud. */
+    --accent:     var(--te-orange);
+
+    /* --primary (345 SVG fills) and --dark (579 SVG strokes) are NOT general
+     * purpose tokens despite the names — they draw the ghosted device artwork
+     * shown on the launch screen before a device is connected. Rendering them
+     * as a warm-grey fill with a hairline outline is what turns that screen
+     * into "product photographed on a catalog card". */
+    --primary:    var(--te-card);
+    --dark:       var(--te-card-line);
+    --base-txt:   var(--te-display-txt);
+
+    /* body text colour resolves through --field-blue in index.css */
+    --field-blue: var(--te-ink);
+    --field-dark: var(--te-ink);
+
+    /* the EP-40 palette collapses ~47 of its tokens onto this one; overriding
+     * it catches anything on that SKU we haven't named individually */
+    --riddim-green: var(--te-ink);
+
+    /* -- chassis --------------------------------------------------------- */
+    --ep-faceplate:       var(--te-cream);
+    --ep-side-panel:      var(--te-cream-2);
+    --ep-output:          var(--te-cream);
+    --ep-volume:          var(--te-cream);
+    --ep-bottom-plate:    var(--te-ink);
+    --ep-speaker-box:     var(--te-key);
+    --ep-speaker-grille:  var(--te-ink-soft);
+    --ep-edges:           var(--te-ink);   /* 227 direct uses — the outline */
+    --ep-inside:          var(--te-ink);
+
+    /* -- display --------------------------------------------------------- */
+    --ep-display:              var(--te-display);
+    --ep-display-txt:          var(--te-display-txt);
+    /* stock picks a teal here; the single-accent rule says no second colour,
+     * and this is readout text, not a highlight — so it stays display-white. */
+    --ep-display-sample-size:  var(--te-display-txt);
+
+    /* -- keys and buttons ------------------------------------------------ */
+    --ep-btn:           var(--te-key);
+    --ep-btn-fx:        var(--te-key);
+    --ep-btn-keys:      var(--te-key);
+    --ep-btn-fader:     var(--te-key);
+    --ep-btn-timing:    var(--te-key);
+    --ep-btn-pad:       var(--te-key);
+    --ep-btn-pad-edge:  var(--te-key-edge);
+    --ep-btn-active:    var(--te-ink);
+    --ep-btn-contrast:  var(--te-ink-soft);
+    --ep-btn-divider:   var(--te-ink);     /* thin black dividers, per TE     */
+
+    /* light-cap buttons on the real unit */
+    --ep-btn-plus:     var(--te-cream-2);
+    --ep-btn-minus:    var(--te-cream-2);
+    --ep-btn-erase:    var(--te-cream-2);
+    --ep-btn-group:    var(--te-cream-2);
+    --ep-btn-shift:    var(--te-cream-2);
+    --ep-btn-system:   var(--te-cream-2);
+    --ep-btn-chop:     var(--te-cream-2);
+    --ep-btn-correct:  var(--te-cream-2);
+    --ep-btn-output:   var(--te-cream-2);
+
+    --ep-btn-play:     var(--te-key);
+
+    /* the two orange parts of the physical hardware, and nothing else */
+    --ep-btn-record:   var(--te-orange);
+    --ep-slider-knob:  var(--te-orange);   /* GAIN knob                      */
+
+    /* -- LEDs ------------------------------------------------------------ */
+    --ep-led-on-fill:    var(--accent);
+    --ep-led-on-stroke:  var(--te-ink);
+    /* unlit LED as an empty hairline ring rather than a black dot: on a cream
+     * body that reads as a drawn detail instead of a hole */
+    --ep-led-off-fill:   none;
+    --ep-led-off-stroke: var(--te-hairline);
+    --ep-record-led:     var(--te-key-edge);
+
+    /* -- transport / labels ---------------------------------------------- */
+    --ep-bpm:                 var(--te-orange);
+    --ep-bpm-contrast:        var(--te-ink);
+    --ep-metronome:           var(--te-key);
+    --ep-metronome-contrast:  var(--te-ink-soft);
+    --ep-label-loop:          var(--te-ink-soft);
+    --ep-sync-midi:           var(--te-key);
+    /* waveform: functional highlight, and orange keeps it to one accent */
+    --ep-wave:                var(--te-orange);
+
+    /* -- USB ------------------------------------------------------------- */
+    --ep-usb:          var(--te-ink-soft);
+    --ep-usb-text:     var(--te-cream);
+    --ep-usb-contact:  var(--te-cream);
+    --ep-usb-cord:     var(--te-ink);
+
+    /* -- logo block ------------------------------------------------------ */
+    --ep-logo-sample-bg:      var(--te-ink);
+    --ep-logo-sample:         var(--te-white);
+    --ep-logo-sample-stroke:  var(--te-ink);
+    --ep-logo-tool-bg:        var(--te-white);
+    --ep-logo-tool-stroke:    var(--te-ink);
+    --ep-logo-ep-stroke:      var(--te-ink);
+    --ep-logo-ep-text:        var(--te-white);
+
+    /* -- IN / OUT jack labels -------------------------------------------- */
+    --in-fill:     var(--te-orange);
+    --in-stroke:   var(--te-ink);
+    --in-text:     var(--te-white);
+    --out-fill:    var(--te-ink);
+    --out-stroke:  var(--te-ink);
+    --out-text:    var(--te-white);
+
+    /* -- sample library --------------------------------------------------
+     * The catalog treatment for a list: white ground, hairline rules, black
+     * text, orange only on the selected row. No zebra striping, no fills. */
+    --library-edges:                var(--te-ink);
+    --library-line:                 var(--te-hairline);
+    --library-heading:              var(--te-ink);
+    --library-row-txt:              var(--te-ink);
+    --library-row-txt-inactive:     var(--te-ink-soft);
+    --library-row-selected:         var(--te-orange);
+    --library-row-multi-selection:  var(--te-orange);
+    --library-row-txt-multi-selection:      var(--te-white);
+    --library-row-multi-selection-divider:  var(--te-ink);
+    --library-row-multi-selection-text:     var(--te-white);
+
+    --library-dot:                            var(--te-hairline);
+    --library-dot-assigned:                   var(--te-orange);
+    --library-dot-assigned-multi-selection:   var(--te-white);
+    --library-dot-multi-selection-unassigned: var(--te-white);
+
+    --library-active-row-pointer:         var(--te-card);
+    --library-active-row-pointer-stroke:  var(--te-ink);
+    --library-active-row-pointer-txt:     var(--te-ink);
+
+    --library-scrollbar-fill:    var(--te-ink);
+    --library-scrollbar-stroke:  var(--te-hairline);
+    --library-device-memory:     var(--te-ink);
+
+    --library-delete:            var(--te-orange);
+    --library-delete-icon:       var(--te-white);
+    --library-download-sample:   var(--te-card);
+    --library-download-sample-txt: var(--te-ink);
+
+    /* Tabs: stock ramps four greys to fake depth. Catalog language has no
+     * depth, so selected = white card, unselected = progressively quieter. */
+    --library-tab-selected:      var(--te-white);
+    --library-tab-selected-txt:  var(--te-ink);
+    --library-tab-stroke:        var(--te-hairline);
+    --library-tab0:              var(--te-card);
+    --library-tab0-text:         var(--te-ink);
+    --library-tab1:              var(--te-card);
+    --library-tab1-text:         var(--te-ink);
+    --library-tab2:              var(--te-cream-2);
+    --library-tab2-text:         var(--te-ink);
+    --library-tab3:              var(--te-ink);
+    --library-tab3-text:         var(--te-white);
+
+    /* the stacked "pages" behind the library panel */
+    --library-pages1: var(--te-card);
+    --library-pages2: var(--te-card);
+    --library-pages3: var(--te-card-line);
+    --library-pages4: var(--te-card-line);
+    --library-pages5: var(--te-card-line);
+    --library-pages6: var(--te-hairline);
+    --library-pages7: var(--te-hairline);
+    --library-pages8: var(--te-hairline);
+    --library-pages9: var(--te-ink-soft);
+
+    /* -- UI chrome: modals, buttons, progress ---------------------------- */
+    --ui-text-on-bg: var(--te-ink);
+
+    --ui-scheme-1-bg:      var(--te-white);
+    --ui-scheme-1-fg:      var(--te-ink);
+    --ui-scheme-1-fg2:     var(--te-ink-soft);
+    --ui-scheme-1-border:  var(--te-ink);
+    --ui-scheme-1-divider: var(--te-hairline);
+    --ui-scheme-1-shadow:  var(--te-ink);
+
+    --ui-scheme-2-bg:      var(--te-card);
+    --ui-scheme-2-fg:      var(--te-ink);
+    --ui-scheme-2-fg2:     var(--te-ink-soft);
+    --ui-scheme-2-border:  var(--te-ink);
+    --ui-scheme-2-divider: var(--te-hairline);
+    --ui-scheme-2-shadow:  var(--te-ink);
+
+    --ui-scheme-3-bg:      var(--te-orange);
+    --ui-scheme-3-fg:      var(--te-white);
+    --ui-scheme-3-fg2:     var(--te-white);
+    --ui-scheme-3-border:  var(--te-ink);
+    --ui-scheme-3-divider: var(--te-hairline);
+    --ui-scheme-3-shadow:  var(--te-ink);
+
+    --ui-help-btn:         var(--te-white);
+    --ui-help-btn-stroke:  var(--te-ink);
+    --ui-help-btn-txt:     var(--te-ink);
+    --ui-back-btn:         var(--te-white);
+    --ui-back-btn-stroke:  var(--te-ink);
+    --ui-back-btn-text:    var(--te-ink);
+    --ui-backup-mode-btn:         var(--te-card);
+    --ui-backup-mode-btn-stroke:  var(--te-ink);
+    --ui-backup-mode-btn-text:    var(--te-ink);
+
+    --ui-progress-bar:              var(--te-orange);
+    --ui-progress-bar-bg:           var(--te-card);
+    --ui-progress-bar-stroke:       var(--te-ink);
+    --ui-progress-bar-txt:          var(--te-white);
+    --ui-progress-bar-txt-inverted: var(--te-ink);
+
+    --ui-progress-modal-bg:          var(--te-white);
+    --ui-progress-modal-bottom:      var(--te-card);
+    --ui-progress-modal-bottom-txt:  var(--te-ink);
+    --ui-progress-modal-stroke:      var(--te-ink);
+    --ui-progress-modal-shadow:      var(--te-ink);
+    --ui-progress-modal-abort:       var(--te-orange);
+    --ui-progress-modal-abort-txt:   var(--te-white);
+    --ui-progress-modal-error:       var(--te-orange);
+
+    --ui-sample-edit:      var(--te-orange);
+    --ui-sample-edit-txt:  var(--te-white);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * 4. THE UNTOKENISED REMAINDER
+ * ---------------------------------------------------------------------------
+ * Roughly half the artwork predates TE's own tokenisation and still carries
+ * hardcoded hex in the bundle — 715 `stroke: "#d2d3d4"`, 410 `fill: "#abb5ba"`
+ * and so on, which is why section 3 alone leaves the launch screen a blue-grey
+ * slab. React renders those props as SVG *presentation attributes*, and any
+ * author stylesheet rule outranks a presentation attribute, so an attribute
+ * selector re-points them without touching the bundle.
+ *
+ * The mapping collapses four accidental grey families (cool blue-grey, warm
+ * beige, EP-40 green, EP-1320 olive — leftovers from artwork shared across
+ * SKUs) onto one neutral ramp, which is most of what makes the result read as
+ * a catalog drawing rather than a screenshot of a device.
+ *
+ * Ordered light -> dark. `fill` and `stroke` are listed separately because a
+ * value is not always used for both.
+ * ------------------------------------------------------------------------ */
+
+:root {
+    /* pressed/active states in the stock art are darker reds; keeping a deeper
+     * orange for them preserves the state distinction without a second hue */
+    --te-orange-deep: #c4441a;
+}
+
+/* -- near-white ----------------------------------------------------------- */
+/* Fills may go to pure white. Strokes may NOT: on the stock grey body these
+ * near-white strokes were bevel highlights, and on our white ground a white
+ * stroke is an invisible one. Every stroke below therefore lands somewhere on
+ * the visible end of the ramp, never on --te-white. */
+[fill="#fff"], [fill="#f1f2f2"]                { fill: var(--te-white); }
+[stroke="#f1f2f2"]                             { stroke: var(--te-card-line); }
+
+/* -- card / body greys ---------------------------------------------------- */
+[fill="#abb5ba"],  [fill="#e5e6e6"], [fill="#dfdfdf"], [fill="#d9dbda"],
+[fill="#dbdddb"],  [fill="#dcd8ce"], [fill="#dcd8cf"], [fill="#c2bab6"] {
+    fill: var(--te-card);
+}
+[stroke="#abb5ba"], [stroke="#e5e6e6"], [stroke="#dfdfdf"], [stroke="#d9dbda"],
+[stroke="#dcd8cf"] {
+    stroke: var(--te-hairline);
+}
+
+/* -- the dominant hairline (715 strokes: the whole line drawing) ----------
+ * This one value draws essentially the entire device outline, so it sets how
+ * present the product reads on the page. --te-line sits deliberately darker
+ * than --te-card-line: light enough to stay a drawing, dark enough to survive
+ * on white. */
+[stroke="#d2d3d4"], [stroke="#4f4059"]         { stroke: var(--te-line); }
+[fill="#d2d3d4"]                               { fill: var(--te-card-line); }
+
+/* -- mid greys ------------------------------------------------------------ */
+[fill="#9aa0a9"], [fill="#989fa5"], [fill="#8a959a"] { fill: var(--te-hairline); }
+[stroke="#8a959a"]                             { stroke: var(--te-hairline); }
+
+/* -- secondary label grey ------------------------------------------------- */
+[fill="#818e95"]                               { fill: var(--te-ink-soft); }
+
+/* -- black ---------------------------------------------------------------- */
+[fill="#000005"], [fill="#221f1f"]             { fill: var(--te-ink); }
+[stroke="#000"], [stroke="#000005"], [stroke="#221f1f"] { stroke: var(--te-ink); }
+
+/* -- other-SKU leftovers: EP-40 green, EP-1320 olive/tan ------------------ */
+[fill="#00503a"], [fill="#367e55"]             { fill: var(--te-ink); }
+[fill="#999269"], [fill="#817d5d"]             { fill: var(--te-ink-soft); }
+[fill="#ca926a"]                               { fill: var(--te-cream-2); }
+
+/* -- accent: every red/orange variant in the stock art ------------------- */
+[fill="#ff681d"], [fill="#f05323"], [fill="#ef4e27"], [fill="#00a69c"] {
+    fill: var(--te-orange);
+}
+[stroke="#f05323"], [stroke="#00a69c"]         { stroke: var(--te-orange); }
+[fill="#b22e20"], [fill="#d52928"], [fill="#cc3629"] { fill: var(--te-orange-deep); }
+[stroke="#b13026"]                             { stroke: var(--te-orange-deep); }
