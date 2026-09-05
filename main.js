@@ -8,7 +8,11 @@ function createWindow () {
     width: 1200,
     height: 800,
     title: "EP-133 Sample Tool",
-    icon: path.join(__dirname + 'icon.ico'),
+    // path.join(__dirname + 'icon.ico') concatenated without a separator,
+    // resolving to ".../app.asaricon.ico" — a path that never exists, so the
+    // window fell back to the default Electron icon. macOS takes its icon from
+    // the app bundle rather than from here; this is what fixes Linux/Windows.
+    icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       //devTools: false,
       preload: path.join(__dirname, 'preload.js')
